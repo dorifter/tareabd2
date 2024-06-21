@@ -7,3 +7,26 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id          Int     @id @default(autoincrement())
+  clave       String
+  email       String  @unique
+  descripcion String?
+
+}
+
+model Email {
+  id          Int     @id @default(autoincrement())
+  remitente_id   Int
+  destinatario_id Int
+  asunto     String
+  cuerpo      String
+  es_favorita Boolean @default(false)
+
+}
+
+model Bloqueados {
+  usuario_id          Int     @id @default(autoincrement())
+  direccion_bloqueada  String
+}

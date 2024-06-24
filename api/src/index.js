@@ -7,40 +7,13 @@ const prisma = new PrismaClient();
 
 // Endpoint para registrar un usuario
 const app = new Elysia().decorate('db', prisma)
-  .post('/api/registrar', async ({req, res}) => {
-    const { nombre, correo, clave, descripcion } = req.body;
-
-    try {
-    // Verificar si el usuario ya existe en la base de datos
-      const usuarioExistente = await bd.user.findUnique({ where: { email: correo } });
-
-      if (usuarioExistente) {
-        return res.send({ estado: 400, mensaje: 'El usuario ya está registrado' });
-      }
-
-    // Crear nuevo usuario
-        const nuevoUsuario = await bd.user.create({
-        data: {
-          nombre,
-          correo,
-          clave,
-          descripcion: descripcion || null // descripción opcional
-        } 
-      });
-
-      console.log(`[${new Date().toLocaleTimeString()}] Se ha registrado el usuario: ${correo} de forma correcta`);
-      res.send({ estado: 200, mensaje: 'Usuario registrado correctamente' });
-
-    } catch (error) {
-      console.error('Error al registrar usuario:', error);
-      res.status(500).send({ estado: 400, mensaje: 'Ha existido un error al realizar la petición' });
-    }
-  })
 
 
-//test para registrar
+/*/
+test para registrar funciona pero no está completo
+
   .post('/api/test', async({db,body}) => { 
-
+    
     const newUser = await db.user.create({
       data: {
         nombre:body.nombre,
@@ -52,18 +25,59 @@ const app = new Elysia().decorate('db', prisma)
     return newUser
   })
 
-/*/
+
 {
   "nombre": "Alberto",
-  "correo": "@@@@@",
+  "email": "@@@@@",
   "clave":"claveunica",
   "descripicion":"descripicion"
 }
 /*/
 
 
-//test para bloquear
-//bloquea al usuario por el id pero solo puede bloquear uno cada usuario
+  .post('/api/registrar', async({db,body}) => {
+    try {
+      const usuarioExistente = await db.user.findUnique({
+        where: { email: body.email }
+      });
+  
+      if (usuarioExistente) {
+        return {
+          estado: 400,
+          mensaje: "El correo electrónico ya está registrado."
+        };
+      }
+  
+      const newUser = await db.user.create({
+        data: {
+          nombre: body.nombre,
+          email: body.email,
+          clave: body.clave,
+          descripcion: body.descripcion
+        }
+      });
+  
+      console.log('Usuario creado:', newUser.email);
+      return {
+        estado: 200,
+        mensaje: "Usuario registrado correctamente."
+      };
+    } catch (error) {
+      console.error('Error al registrar usuario:', error);
+      return {
+        estado: 400,
+        mensaje: "Ha ocurrido un error al registrar el usuario."
+      };
+    }
+  
+  })
+
+
+/*/
+
+test para bloquear
+bloquea al usuario por el id pero solo puede bloquear uno cada usuario
+funciona pero no está completo
   .post('/api/test2', async({db,body}) => { 
     const usuario = await db.user.findUnique({where:{email:body.correo}})
     const newBloq = await db.bloqueados.create({
@@ -76,14 +90,77 @@ const app = new Elysia().decorate('db', prisma)
   })
 
 
-/*/
+
 {
-  "correo": "abbb",
+  "email": "abbb",
   "clave": "@asasds@@@@",
   "correo_bloquear":"abbb"
 }
 /*/
 
+.post('/api/bloquear', async({db,body}) => { 
+  try {
+    const usuario = await db.user.findUnique({
+      where: { email: body.email }
+    });
+    if (!usuario) {
+      return {
+        estado: 400,
+        mensaje: "El usuario no existe."
+      };
+    }
+
+    if (usuario.clave !== body.clave) {
+      return {
+        estado: 401,
+        mensaje: "Credenciales incorrectas."
+      };
+    }
+
+    const usuarioBloquear = await db.user.findUnique({
+      where: { email: body.correo_bloquear }
+    });
+
+    if (!usuarioBloquear) {
+      return {
+        estado: 400,
+        mensaje: "El correo a bloquear no existe."
+      };
+    }
+
+    const bloqueoExistente = await db.bloqueados.findFirst({
+      where: { direccion_bloqueada: body.correo_bloquear }
+    });
+
+    if (bloqueoExistente) {
+      return {
+        estado: 400,
+        mensaje: "El correo ya está bloqueado."
+      };
+    }
+
+    const newBloq = await db.bloqueados.create({
+      data: {
+        usuario: usuario.id,
+        direccion_bloqueada: body.correo_bloquear,
+        direccion_usuario: body.email  
+      }
+    });
+
+    console.log('Usuario bloqueado:', newBloq);
+    return {
+      estado: 200,
+      mensaje: "Usuario bloqueado correctamente.",
+      bloqueado: newBloq
+    };
+  } catch (error) {
+    console.error('Error al bloquear usuario:', error);
+    return {
+      estado: 400,
+      mensaje: "Ha ocurrido un error al bloquear el usuario."
+    };
+  }
+})
 
 //Endpoint saca el correo de la url y te da el usuario
   .get('/api/:correo', async({ params: { correo },db }) => {
@@ -104,117 +181,73 @@ const app = new Elysia().decorate('db', prisma)
   })
 
 
+  app.post("/api/autenticar", async({body,db }) => {
+
+    try {
+      const usuario = await db.user.findUnique({
+        where: { email: body.email }
+      });
+  
+      if (usuario && usuario.clave === body.clave) {
+        return {
+          estado: 200,
+          mensaje: "Autenticación exitosa",
+          usuario: usuario.email
+        };
+      } else {
+        return {
+          estado: 401,
+          mensaje: "Credenciales incorrectas"
+        };
+      }
+    } catch (error) {
+      console.error('Error al autenticar usuario:', error);
+      return {
+        estado: 400,
+        mensaje: "Ha ocurrido un error al autenticar el usuario"
+      };
+    }
+  })
+
+
+
 //endpoint favoritos
 
-  .post('/api/test3', async({db,body}) => { 
-    const usuario = await db.user.findUnique({where:{email:body.correo}})
+  .post('/api/marcarcorreo', async({db,body}) => { 
+    const usuario = await db.user.findUnique({where:{email:body.email}})
     const newBloq = await db.favoritos.create({
       data: {
-        usuario_id:usuario.id,
-        direccion_favoritos:body.id_correo_favorito
+        usuario:usuario.id,
+        direccion_favorita:body.id_correo_favorito,
+        direccion_usuario:usuario.email
       }
     })
     return newBloq
   })
 
-/*/
-// Endpoint para bloquear un usuario
-  .post('/api/bloquear', async (req, res) => {
-    const { correo, clave, correo_bloquear } = req.body;
 
-    try {
-      const usuario = await prisma.user.findUnique({ where: { email: correo } });
+  .delete('/api/desmarcarcorreo', async({db,body}) => {
+    const id_favorito = await db.user.findUnique({where:{id:parseInt(body.id_correo_favorito)}})
+    //const relacion = await db.user.findUnique({where:{direccion_favorita:body.email}})
+    //return id_favorito.email
+    const relacion = await db.favoritos.delete({
+      where:{
+        direccion_favorita:id_favorito.email
+        //direccion_usuario:body.email
+      },
 
-      if (!usuario || usuario.clave !== clave) {
-        return res.send({ estado: 400, mensaje: 'Credenciales incorrectas' });
-      }
-
-    // Crear registro de bloqueo
-      await prisma.bloqueados.create({
-        data: {
-          usuario_id: usuario.id,
-          direccion_bloqueada: correo_bloquear
-        }
-      });
-
-      console.log(`[${new Date().toLocaleTimeString()}] El usuario ${correo} ha bloqueado a ${correo_bloquear}`);
-      res.send({ estado: 200, mensaje: 'Usuario bloqueado correctamente' });
-
-    } catch (error) {
-      console.error('Error al bloquear usuario:', error);
-      res.status(500).send({ estado: 400, mensaje: 'Ha existido un error al realizar la petición' });
-    }
+    })
+    return relacion
+    /*/
+    return await db.favoritos.delete({
+      where:{
+        direccion_usuario:body.email,
+        direccion_favorita:parseInt(body.id_correo_favorito)
+      }})
+      /*/
   })
 
-// Endpoint para obtener información pública de un usuario
 
-  .get('/api/informacion/:correo', async (req, res) => {
-    const { correo } = req.params;
-
-    try {
-      const usuario = await prisma.user.findUnique({ where: { email: correo } });
-
-      if (!usuario) {
-        return res.send({ estado: 400, mensaje: 'Usuario no encontrado' });
-      }
-
-      res.send({
-        estado: 200,
-        nombre: usuario.nombre,
-        correo: usuario.email,
-        descripcion: usuario.descripcion || ''
-      });
-
-    } catch (error) {
-      console.error('Error al obtener información de usuario:', error);
-      res.status(500).send({ estado: 400, mensaje: 'Ha existido un error al realizar la petición' });
-    }
-  })
-
-// Endpoint para marcar un correo como favorito
-
-  .post('/api/marcarcorreo', async (req, res) => {
-    const { correo, clave, id_correo_favorito } = req.body;
-
-    try {
-      const usuario = await prisma.user.findUnique({ where: { email: correo } });
-
-      if (!usuario || usuario.clave !== clave) {
-        return res.send({ estado: 400, mensaje: 'Credenciales incorrectas' });
-      }
-
-    // Aquí debes implementar la lógica para marcar el correo como favorito
-      console.log(`[${new Date().toLocaleTimeString()}] El correo con ID ${id_correo_favorito} ha sido marcado como favorito`);
-      res.send({ estado: 200, mensaje: 'Correo marcado como favorito correctamente' });
-
-    } catch (error) {
-      console.error('Error al marcar correo como favorito:', error);
-      res.status(500).send({ estado: 400, mensaje: 'Ha existido un error al realizar la petición' });
-    }
-  })
-
-// Endpoint para desmarcar un correo como favorito
-
-  .delete('/api/desmarcarcorreo', async (req, res) => {
-    const { correo, clave, id_correo_favorito } = req.body;
-
-    try {
-      const usuario = await prisma.user.findUnique({ where: { email: correo } });
-
-      if (!usuario || usuario.clave !== clave) {
-        return res.send({ estado: 400, mensaje: 'Credenciales incorrectas' });
-      }
-
-    // Aquí debes implementar la lógica para desmarcar el correo como favorito
-      console.log(`[${new Date().toLocaleTimeString()}] El correo con ID ${id_correo_favorito} ha sido desmarcado como favorito`);
-      res.send({ estado: 200, mensaje: 'Correo desmarcado como favorito correctamente' });
-
-    } catch (error) {
-      console.error('Error al desmarcar correo como favorito:', error);
-      res.status(500).send({ estado: 400, mensaje: 'Ha existido un error al realizar la petición' });
-    }
-  })
-/*/
 
     .listen(3000, () => {
     console.log('Servidor corriendo en http://localhost:3000');

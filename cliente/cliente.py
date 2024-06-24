@@ -1,14 +1,20 @@
 import requests
 
-# URL base de la API
-BASE_URL = 'http://localhost:3000/api'
+BASE_URL = "http://localhost:3000/api"
 
-def registrar_usuario():
-    nombre = input('Ingrese su nombre: ')
-    email = input('Ingrese su correo electrónico: ')
-    clave = input('Ingrese su contraseña: ')
-    descripcion = input('Ingrese una descripción (opcional): ')
+def autenticar_usuario(email, clave):
+    response = requests.post(f"{BASE_URL}/autenticar", json={"email": email, "clave": clave})
+    return response.json()
 
+<<<<<<< HEAD
+def ver_informacion(correo):
+    response = requests.get(f"{BASE_URL}/{correo}")
+    return response.json()
+
+def ver_correos_favoritos(email):
+    response = requests.get(f"{BASE_URL}/favoritos", params={"email": email})
+    return response.json()
+=======
     payload = {
         "nombre": nombre,
         "email": email,
@@ -24,125 +30,124 @@ def registrar_usuario():
             print(f'Error al registrar el usuario: {response.json()["mensaje"]}')
     except requests.exceptions.RequestException as e:
         print(f'Error de conexión: {e}')
+>>>>>>> eb872788171a6630ab710981ac809a1f13fb7bd1
 
-def bloquear_usuario(email, clave):
-    correo_bloquear = input('Ingrese el correo del usuario que desea bloquear: ')
+def marcar_correo_favorito(email, id_correo_favorito):
+    response = requests.post(f"{BASE_URL}/marcarcorreo", json={"email": email, "id_correo_favorito": id_correo_favorito})
+    return response.json()
 
-    payload = {
-        "correo": email,
-        "clave": clave,
-        "correo_bloquear": correo_bloquear
-    }
+def desmarcar_correo_favorito(id_correo_favorito):
+    response = requests.delete(f"{BASE_URL}/desmarcarcorreo", json={"id_correo_favorito": id_correo_favorito})
+    return response.json()
 
-    try:
-        response = requests.post(f'{BASE_URL}/bloquear', json=payload)
-        if response.status_code == 200:
-            print('Usuario bloqueado correctamente.')
-        else:
-            print(f'Error al bloquear el usuario: {response.json()["mensaje"]}')
-    except requests.exceptions.RequestException as e:
-        print(f'Error de conexión: {e}')
+import requests
 
-def obtener_informacion(email, clave):
-    correo = input('Ingrese el correo del usuario del que desea obtener información: ')
+BASE_URL = "http://localhost:3000"
 
-    try:
-        response = requests.get(f'{BASE_URL}/informacion/{correo}', auth=(email, clave))
-        if response.status_code == 200:
-            data = response.json()
-            print(f'Información del usuario {correo}:')
-            print(f'Nombre: {data["nombre"]}')
-            print(f'Correo: {data["correo"]}')
-            print(f'Descripción: {data["descripcion"]}')
-        else:
-            print(f'Error al obtener la información del usuario: {response.json()["mensaje"]}')
-    except requests.exceptions.RequestException as e:
-        print(f'Error de conexión: {e}')
+def autenticar_usuario(email, clave):
+    response = requests.post(f"{BASE_URL}/api/autenticar", json={"email": email, "clave": clave})
+    return response.json()
 
-def marcar_correo_favorito(email, clave):
-    id_correo_favorito = input('Ingrese el ID del correo que desea marcar como favorito: ')
+def registrar_usuario(nombre, email, clave, descripcion):
+    response = requests.post(f"{BASE_URL}/api/registrar", json={"nombre": nombre, "email": email, "clave": clave, "descripcion": descripcion})
+    return response.json()
 
-    payload = {
-        "correo": email,
-        "clave": clave,
-        "id_correo_favorito": id_correo_favorito
-    }
+def bloquear_usuario(email, clave, correo_bloquear):
+    response = requests.post(f"{BASE_URL}/api/bloquear", json={"email": email, "clave": clave, "correo_bloquear": correo_bloquear})
+    return response.json()
 
-    try:
-        response = requests.post(f'{BASE_URL}/marcarcorreo', json=payload)
-        if response.status_code == 200:
-            print('Correo marcado como favorito correctamente.')
-        else:
-            print(f'Error al marcar el correo como favorito: {response.json()["mensaje"]}')
-    except requests.exceptions.RequestException as e:
-        print(f'Error de conexión: {e}')
+def ver_informacion(correo):
+    response = requests.get(f"{BASE_URL}/api/{correo}")
+    return response.json()
 
-def desmarcar_correo_favorito(email, clave):
-    id_correo_favorito = input('Ingrese el ID del correo que desea desmarcar como favorito: ')
+def ver_correos_favoritos(email):
+    response = requests.get(f"{BASE_URL}/api/favoritos", params={"email": email})
+    return response.json()
 
-    payload = {
-        "correo": email,
-        "clave": clave,
-        "id_correo_favorito": id_correo_favorito
-    }
+def marcar_correo_favorito(email, id_correo_favorito):
+    response = requests.post(f"{BASE_URL}/api/marcarcorreo", json={"email": email, "id_correo_favorito": id_correo_favorito})
+    return response.json()
 
-    try:
-        response = requests.delete(f'{BASE_URL}/desmarcarcorreo', json=payload)
-        if response.status_code == 200:
-            print('Correo desmarcado como favorito correctamente.')
-        else:
-            print(f'Error al desmarcar el correo como favorito: {response.json()["mensaje"]}')
-    except requests.exceptions.RequestException as e:
-        print(f'Error de conexión: {e}')
-
-def menu(email, clave):
-    while True:
-        print(f'Bienvenido, {email}!')
-        print('Menú de opciones:')
-        print('1. Registrar nuevo usuario')
-        print('2. Bloquear usuario')
-        print('3. Obtener información de usuario')
-        print('4. Marcar correo como favorito')
-        print('5. Desmarcar correo como favorito')
-        print('6. Salir')
-
-        opcion = input('Seleccione una opción: ')
-
-        if opcion == '1':
-            registrar_usuario()
-        elif opcion == '2':
-            bloquear_usuario(email, clave)
-        elif opcion == '3':
-            obtener_informacion(email, clave)
-        elif opcion == '4':
-            marcar_correo_favorito(email, clave)
-        elif opcion == '5':
-            desmarcar_correo_favorito(email, clave)
-        elif opcion == '6':
-            print('Saliendo del cliente...')
-            break
-        else:
-            print('Opción no válida')
+def desmarcar_correo_favorito(id_correo_favorito):
+    response = requests.delete(f"{BASE_URL}/api/desmarcarcorreo", json={"id_correo_favorito": id_correo_favorito})
+    return response.json()
 
 def main():
-    print('Bienvenido al cliente de gestión de correos.')
-
+    print("-----------------------------------")
+    print("¡Bienvenido a CommuniKen!")
     while True:
-        print('Menú principal:')
-        print('1. Iniciar sesión')
-        print('2. Salir')
 
-        opcion = input('Seleccione una opción: ')
+            email = input("Ingrese su correo electrónico: ")
+            clave = input("Ingrese su clave: ")
+            
+            auth_response = autenticar_usuario(email, clave)
+            if auth_response.get('estado') != 200:
+                print(auth_response.get('mensaje'))
+                return
 
-        if opcion == '1':
-            email = input('Ingrese su correo electrónico: ')
-            clave = input('Ingrese su contraseña: ')
-            menu(email, clave)
-        elif opcion == '2':
-            print('Saliendo del cliente...')
-            break
-        else:
-            print('Opción no válida. Intente nuevamente.')
+            while True:
+                print("-----------------------------------")
+                print("\nMenú de opciones:")
+                print("1. Ver información de una dirección de correo electrónico")
+                print("2. Ver correos marcados como favoritos")
+                print("3. Marcar correo como favorito")
+                print("4. Desmarcar correo favorito")
+                print("5. Bloquear correo")
+                print("6. Registrar usuario")
+                print("7. Terminar con la ejecución del cliente")
+                print("\n-----------------------------------")
 
-if __name__ == '__main__':
+                opcion = input("Seleccione una opción: ")
+
+                if opcion == '1':
+                    correo_a_ver = input("Ingrese la dirección de correo electrónico a consultar: ")
+                    info_response = ver_informacion(correo_a_ver)
+                    if info_response.get('estado') == 200:
+                        print(f"Nombre: {info_response.get('nombre')}")
+                        print(f"Email: {info_response.get('email')}")
+                        print(f"Descripción: {info_response.get('descripcion')}")
+                    else:
+                        print(info_response.get('mensaje'))
+
+                elif opcion == '2':
+                    favoritos_response = ver_correos_favoritos(email)
+                    if 'favoritos' in favoritos_response:
+                        print("Correos favoritos:")
+                        for favorito in favoritos_response['favoritos']:
+                            print(f"- {favorito}")
+                    else:
+                        print(favoritos_response.get('mensaje'))
+
+                elif opcion == '3':
+                    id_correo_favorito = input("Ingrese la dirección de correo electrónico a marcar como favorito: ")
+                    marcar_response = marcar_correo_favorito(email, id_correo_favorito)
+                    print(marcar_response.get('mensaje'))
+
+                elif opcion == '4':
+                    id_correo_favorito = input("Ingrese la dirección de correo electrónico a desmarcar como favorito: ")
+                    desmarcar_response = desmarcar_correo_favorito(id_correo_favorito)
+                    print(desmarcar_response.get('mensaje'))
+
+                elif opcion == '5':
+                    correo_bloquear = input("Ingrese la dirección de correo electrónico a bloquear: ")
+                    bloquear_response = bloquear_usuario(email, clave, correo_bloquear)
+                    print(bloquear_response.get('mensaje'))
+
+                elif opcion == '6':
+                    nombre = input("Ingrese su nombre: ")
+                    email_registrar = input("Ingrese el correo electrónico a registrar: ")
+                    clave_registrar = input("Ingrese la clave del nuevo usuario: ")
+                    descripcion = input("Ingrese una descripción: ")
+                    registrar_response = registrar_usuario(nombre, email_registrar, clave_registrar, descripcion)
+                    print(registrar_response.get('mensaje'))
+
+                elif opcion == '7':
+                    print("Terminando la ejecución del cliente.")
+                    break
+
+                else:
+                    print("Opción no válida. Por favor, seleccione una opción del menú.")
+
+
+if __name__ == "__main__":
     main()

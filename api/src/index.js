@@ -2,37 +2,9 @@ import { Elysia } from 'elysia';
 import { PrismaClient } from '@prisma/client';
 
 
-//const app = new Elysia();
 const prisma = new PrismaClient();
 
-// Endpoint para registrar un usuario
 const app = new Elysia().decorate('db', prisma)
-
-
-/*/
-test para registrar funciona pero no está completo
-
-  .post('/api/test', async({db,body}) => { 
-    
-    const newUser = await db.user.create({
-      data: {
-        nombre:body.nombre,
-        email:body.correo,
-        clave:body.clave,
-        descripcion:body.descripcion
-      }
-    })
-    return newUser
-  })
-
-
-{
-  "nombre": "Alberto",
-  "email": "@@@@@",
-  "clave":"claveunica",
-  "descripicion":"descripicion"
-}
-/*/
 
 
   .post('/api/registrar', async({db,body}) => {
@@ -73,30 +45,6 @@ test para registrar funciona pero no está completo
   })
 
 
-/*/
-
-test para bloquear
-bloquea al usuario por el id pero solo puede bloquear uno cada usuario
-funciona pero no está completo
-  .post('/api/test2', async({db,body}) => { 
-    const usuario = await db.user.findUnique({where:{email:body.correo}})
-    const newBloq = await db.bloqueados.create({
-      data: {
-        usuario_id:usuario.id,
-        direccion_bloqueada:body.correo_bloquear
-      }
-    })
-    return newBloq
-  })
-
-
-
-{
-  "email": "abbb",
-  "clave": "@asasds@@@@",
-  "correo_bloquear":"abbb"
-}
-/*/
 
 .post('/api/bloquear', async({db,body}) => { 
   try {
@@ -141,7 +89,7 @@ funciona pero no está completo
 
     const newBloq = await db.bloqueados.create({
       data: {
-        usuario: usuario.id,
+        usuario_id: usuario.id,
         direccion_bloqueada: body.correo_bloquear,
         direccion_usuario: body.email  
       }
@@ -162,7 +110,7 @@ funciona pero no está completo
   }
 })
 
-//Endpoint saca el correo de la url y te da el usuario
+
   .get('/api/:correo', async({ params: { correo },db }) => {
     let usuario = await db.user.findUnique({where: {email:correo}})
     if (!usuario) {
@@ -181,7 +129,7 @@ funciona pero no está completo
   })
 
 
-  app.post("/api/autenticar", async({body,db }) => {
+  app.post("/api/autenticar", async({db, body }) => {
 
     try {
       const usuario = await db.user.findUnique({
@@ -210,32 +158,117 @@ funciona pero no está completo
   })
 
 
-
-//endpoint favoritos
-
-  .post('/api/marcarcorreo', async({db,body}) => { 
-    const usuario = await db.user.findUnique({where:{email:body.email}})
-    const newBloq = await db.favoritos.create({
-      data: {
-        usuario:usuario.id,
-        direccion_favorita:body.id_correo_favorito,
-        direccion_usuario:usuario.email
+  app.post('/api/marcarcorreo', async ({ db, body }) => {
+    try {
+      const usuario = await db.user.findUnique({ where: { email: body.email } });
+  
+      if (!usuario) {
+        return {
+          estado: 404,
+          mensaje: "Usuario no encontrado."
+        };
       }
-    })
-    return newBloq
+  
+      const correoFavorito = await db.user.findUnique({ where: { email: body.id_correo_favorito } });
+  
+      if (!correoFavorito) {
+        return {
+          estado: 404,
+          mensaje: "Correo a marcar como favorito no encontrado."
+        };
+      }
+  
+      const newFavorito = await db.favoritos.create({
+        data: {
+          usuario: usuario.id,
+          direccion_favorita: body.id_correo_favorito,
+          direccion_usuario: usuario.email
+        }
+      });
+  
+      return {
+        estado: 200,
+        mensaje: "Correo marcado como favorito correctamente.",
+        favorito: newFavorito
+      };
+    } catch (error) {
+      console.error('Error al marcar correo como favorito:', error);
+      return {
+        estado: 400,
+        mensaje: "Ha ocurrido un error al marcar el correo como favorito."
+      };
+    }
   })
 
+  .delete('/api/desmarcarcorreo', async ({ db, body }) => {
+  try {
+    const correoFavorito = await db.user.findFirst({ where: { email: body.id_correo_favorito } });
 
-  .delete('/api/desmarcarcorreo', async({db,body}) => {
-    const id_favorito = await db.user.findFirst({where:{id:parseInt(body.id_correo_favorito)}})
-    const id_favorito2 = await db.favoritos.findFirst({where:{direccion_favorita:id_favorito.email}})
-    const id = id_favorito2.id
-    return db.favoritos.delete({where:{id}})
-    //return db.favoritos.delete({where:{id:id_favorito2.id}})
+    if (!correoFavorito) {
+      return {
+        estado: 404,
+        mensaje: "Correo favorito no encontrado."
+      };
+    }
+
+    const favorito = await db.favoritos.findFirst({ where: { direccion_favorita: correoFavorito.email } });
+
+    if (!favorito) {
+      return {
+        estado: 404,
+        mensaje: "Correo favorito no encontrado en la lista de favoritos."
+      };
+    }
+
+    const deletedFavorito = await db.favoritos.delete({ where: { id: favorito.id } });
+
+    return {
+      estado: 200,
+      mensaje: "Correo desmarcado como favorito correctamente.",
+      favorito: deletedFavorito
+    };
+  } catch (error) {
+    console.error('Error al desmarcar correo como favorito:', error);
+    return {
+      estado: 400,
+      mensaje: "Ha ocurrido un error al desmarcar el correo como favorito."
+    };
+  }
+})
+
+  .get('/api/favoritos', async ({ db, query }) => {
+    try {
+      const { email } = query;
+      
+      const usuario = await db.user.findUnique({
+        where: { email: email },
+      });
+      
+      if (!usuario) {
+        return {
+          estado: 404,
+          mensaje: 'Usuario no encontrado',
+        };
+      }
+  
+      const favoritos = await db.favoritos.findMany({
+        where: { usuario: usuario.id },
+      });
+  
+      return {
+        estado: 200,
+        favoritos: favoritos.map(f => f.direccion_favorita),
+      };
+    } catch (error) {
+      console.error('Error al obtener correos favoritos:', error);
+      return {
+        estado: 400,
+        mensaje: 'Ha ocurrido un error al obtener los correos favoritos',
+      };
+    }
   })
 
-
-
-    .listen(3000, () => {
+  
+  .listen(3000, () => {
     console.log('Servidor corriendo en http://localhost:3000');
   });

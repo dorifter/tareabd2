@@ -17,16 +17,15 @@ model User {
 
 }
 
-model Email {
+model Bloqueados {
   id          Int     @id @default(autoincrement())
-  remitente_id   Int
-  destinatario_id Int
-  asunto     String
-  cuerpo      String
-  es_favorita Boolean @default(false)
-
+  usuario_id           Int
+  direccion_bloqueada  String
+  direccion_usuario    String
 }
 
+<<<<<<< HEAD
+=======
 model Bloqueados {
   id         Int     @id @default(autoincrement())
   usuario    Int
@@ -34,6 +33,7 @@ model Bloqueados {
   direccion_usuario String
 }
 
+>>>>>>> eb872788171a6630ab710981ac809a1f13fb7bd1
 model Favoritos {
   id         Int     @id @default(autoincrement())
   usuario    Int

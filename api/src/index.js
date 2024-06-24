@@ -101,11 +101,21 @@ const app = new Elysia().decorate('db', prisma)
       descripcion: usuario.descripcion
     }
     return mostrar
-
   })
 
 
+//endpoint favoritos
 
+  .post('/api/test3', async({db,body}) => { 
+    const usuario = await db.user.findUnique({where:{email:body.correo}})
+    const newBloq = await db.favoritos.create({
+      data: {
+        usuario_id:usuario.id,
+        direccion_favoritos:body.id_correo_favorito
+      }
+    })
+    return newBloq
+  })
 
 /*/
 // Endpoint para bloquear un usuario

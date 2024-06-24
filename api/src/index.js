@@ -55,21 +55,27 @@ const app = new Elysia().decorate('db', prisma)
     console.log('Usuario creado:'   , newUser)
   })
 
+/*/{
+  "nombre": "Alberto",
+  "correo": "@@@@@",
+  "clave":"claveunica",
+  "descripicion":"descripicion"
+}
+/*/
+
+
 //test para bloquear
   .post('/api/test2', async({db,body}) => { 
-    const usuarioExistente = await db.user.findUnique({ where: { email: body.correo } });
-    if (usuarioExistente) {
-      return console.log("usuario ocupado");
-    }
-    const newUser = await db.user.create({
+
+    const usuario = await db.user.findUnique({where: {email: String(body.correo)}})
+    await db.bloqueados.create({
+
       data: {
-        nombre:body.nombre,
-        email:body.correo,
-        clave:body.clave,
-        descripcion:body.descripcion
+        usuario_id: 5,
+        direccion_bloqueada: body.correo_bloquear 
       }
-    })
-    console.log('Usuario creado:'   , newUser)
+    });
+    return usuario
   })
 
 

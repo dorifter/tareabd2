@@ -40,10 +40,7 @@ const app = new Elysia().decorate('db', prisma)
 
 //test para registrar
   .post('/api/test', async({db,body}) => { 
-    const usuarioExistente = await db.user.findUnique({ where: { email: body.correo } });
-    if (usuarioExistente) {
-      return console.log("usuario ocupado");
-    }
+
     const newUser = await db.user.create({
       data: {
         nombre:body.nombre,
@@ -52,10 +49,11 @@ const app = new Elysia().decorate('db', prisma)
         descripcion:body.descripcion
       }
     })
-    console.log('Usuario creado:'   , newUser)
+    return newUser
   })
 
-/*/{
+/*/
+{
   "nombre": "Alberto",
   "correo": "@@@@@",
   "clave":"claveunica",
@@ -65,19 +63,26 @@ const app = new Elysia().decorate('db', prisma)
 
 
 //test para bloquear
+//bloquea al usuario por el id pero solo puede bloquear uno cada usuario
   .post('/api/test2', async({db,body}) => { 
-
-    const usuario = await db.user.findUnique({where: {email: String(body.correo)}})
-    await db.bloqueados.create({
-
+    const usuario = await db.user.findUnique({where:{email:body.correo}})
+    const newBloq = await db.bloqueados.create({
       data: {
-        usuario_id: 5,
-        direccion_bloqueada: body.correo_bloquear 
+        usuario_id:usuario.id,
+        direccion_bloqueada:body.correo_bloquear
       }
-    });
-    return usuario
+    })
+    return newBloq
   })
 
+
+/*/
+{
+" correo ": " abbb",
+" clave ": " aaaa ",
+" correo_bloquear ": "@@@@@"
+}
+/*/
 
 
 

@@ -38,7 +38,7 @@ const app = new Elysia().decorate('db', prisma)
   })
 
 
-
+//test para registrar
   .post('/api/test', async({db,body}) => { 
     const usuarioExistente = await db.user.findUnique({ where: { email: body.correo } });
     if (usuarioExistente) {
@@ -54,6 +54,27 @@ const app = new Elysia().decorate('db', prisma)
     })
     console.log('Usuario creado:'   , newUser)
   })
+
+//test para bloquear
+  .post('/api/test2', async({db,body}) => { 
+    const usuarioExistente = await db.user.findUnique({ where: { email: body.correo } });
+    if (usuarioExistente) {
+      return console.log("usuario ocupado");
+    }
+    const newUser = await db.user.create({
+      data: {
+        nombre:body.nombre,
+        email:body.correo,
+        clave:body.clave,
+        descripcion:body.descripcion
+      }
+    })
+    console.log('Usuario creado:'   , newUser)
+  })
+
+
+
+
 
 
 

@@ -1,1 +1,17 @@
-{ "dependencies": { "@prisma/client": "^5.15.1", "prisma": "^5.15.1" } }
+{
+  "name": "api",
+  "version": "1.0.50",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "bun run --watch api/src/index.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.15.1",
+    "elysia": "^1.0.25",
+    "prisma": "^5.15.1"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "module": "src/index.js"
+}

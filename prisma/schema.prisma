@@ -10,6 +10,7 @@ datasource db {
 
 model User {
   id          Int     @id @default(autoincrement())
+  nombre      String
   clave       String
   email       String  @unique
   descripcion String?
@@ -27,6 +28,15 @@ model Email {
 }
 
 model Bloqueados {
-  usuario_id          Int     @id @default(autoincrement())
+  id         Int     @id @default(autoincrement())
+  usuario    Int
   direccion_bloqueada  String
+  direccion_usuario String
+}
+
+model Favoritos {
+  id         Int     @id @default(autoincrement())
+  usuario    Int
+  direccion_favorita  String
+  direccion_usuario String
 }

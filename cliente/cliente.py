@@ -11,13 +11,13 @@ def registrar_usuario():
 
     payload = {
         "nombre": nombre,
-        "correo": email,
+        "email": email,
         "clave": clave,
         "descripcion": descripcion
     }
 
     try:
-        response = requests.post(f'{BASE_URL}/registrar', json=payload)
+        response = requests.post(f'{BASE_URL}/test', json=payload)
         if response.status_code == 200:
             print('Usuario registrado correctamente.')
         else:

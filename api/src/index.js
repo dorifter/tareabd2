@@ -78,19 +78,36 @@ const app = new Elysia().decorate('db', prisma)
 
 /*/
 {
-" correo ": " abbb",
-" clave ": " aaaa ",
-" correo_bloquear ": "@@@@@"
+  "correo": "abbb",
+  "clave": "@asasds@@@@",
+  "correo_bloquear":"abbb"
 }
 /*/
 
 
+//Endpoint saca el correo de la url y te da el usuario
+  .get('/api/:correo', async({ params: { correo },db }) => {
+    let usuario = await db.user.findUnique({where: {email:correo}})
+    if (!usuario) {
+      return {
+        estado: 404,
+        mensaje: 'Usuario no encontrado'
+      };
+    }
+    let mostrar = {
+      estado: 200,
+      nombre: usuario.nombre,
+      email: usuario.email,
+      descripcion: usuario.descripcion
+    }
+    return mostrar
+
+  })
 
 
 
 
-
-
+/*/
 // Endpoint para bloquear un usuario
   .post('/api/bloquear', async (req, res) => {
     const { correo, clave, correo_bloquear } = req.body;
@@ -120,6 +137,7 @@ const app = new Elysia().decorate('db', prisma)
   })
 
 // Endpoint para obtener información pública de un usuario
+
   .get('/api/informacion/:correo', async (req, res) => {
     const { correo } = req.params;
 
@@ -186,7 +204,7 @@ const app = new Elysia().decorate('db', prisma)
       res.status(500).send({ estado: 400, mensaje: 'Ha existido un error al realizar la petición' });
     }
   })
-
+/*/
 
     .listen(3000, () => {
     console.log('Servidor corriendo en http://localhost:3000');

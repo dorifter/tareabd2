@@ -227,24 +227,11 @@ funciona pero no está completo
 
 
   .delete('/api/desmarcarcorreo', async({db,body}) => {
-    const id_favorito = await db.user.findUnique({where:{id:parseInt(body.id_correo_favorito)}})
-    //const relacion = await db.user.findUnique({where:{direccion_favorita:body.email}})
-    //return id_favorito.email
-    const relacion = await db.favoritos.delete({
-      where:{
-        direccion_favorita:id_favorito.email
-        //direccion_usuario:body.email
-      },
-
-    })
-    return relacion
-    /*/
-    return await db.favoritos.delete({
-      where:{
-        direccion_usuario:body.email,
-        direccion_favorita:parseInt(body.id_correo_favorito)
-      }})
-      /*/
+    const id_favorito = await db.user.findFirst({where:{id:parseInt(body.id_correo_favorito)}})
+    const id_favorito2 = await db.favoritos.findFirst({where:{direccion_favorita:id_favorito.email}})
+    const id = id_favorito2.id
+    return db.favoritos.delete({where:{id}})
+    //return db.favoritos.delete({where:{id:id_favorito2.id}})
   })
 
 
